@@ -1,26 +1,72 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-primary: white;
+  --bg-secondary: rgb(250 250 250);
+  --bg-gradient-from: rgb(250 250 250);
+  --bg-gradient-to: rgb(186 230 253);
+  --text-primary: rgb(24 24 27);
+  --text-secondary: rgb(82 82 91);
+  --text-muted: rgb(113 113 122);
+  --border-color: rgb(228 228 231);
+  --button-bg: white;
+  --button-hover: rgb(250 250 250);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  --bg-primary: rgb(9 9 11);
+  --bg-secondary: rgb(39 39 42);
+  --bg-gradient-from: rgb(9 9 11);
+  --bg-gradient-to: rgb(24 24 27);
+  --text-primary: rgb(244 244 245);
+  --text-secondary: rgb(212 212 216);
+  --text-muted: rgb(161 161 170);
+  --border-color: rgb(63 63 70);
+  --button-bg: rgb(39 39 42);
+  --button-hover: rgb(63 63 70);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    border-color: var(--border-color);
+  }
+  
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition-property: color, background-color;
+    transition-duration: 200ms;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Custom utility classes for dark mode */
+  .bg-gradient-custom {
+    background: linear-gradient(to bottom right, var(--bg-gradient-from), var(--bg-gradient-to));
+  }
+  
+  .text-custom-primary {
+    color: var(--text-primary);
+  }
+  
+  .text-custom-secondary {
+    color: var(--text-secondary);
+  }
+  
+  .text-custom-muted {
+    color: var(--text-muted);
+  }
+  
+  .bg-custom-button {
+    background-color: var(--button-bg);
+  }
+  
+  .hover\:bg-custom-button:hover {
+    background-color: var(--button-hover);
+  }
 }
+
