@@ -1,11 +1,40 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../contexts/AuthContext';
 import ThemeToggle from '../components/ThemeToggle';
 
 export default function Home() {
-  const handleGoogleSignIn = () => {
-    console.log('Google sign in clicked');
+  const { signInWithGoogle, user, loading } = useAuth();
+  const router = useRouter();
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+      router.push('/home');
+    } catch (error) {
+      console.error('Sign in error:', error);
+      // You can add error handling here (toast notification, etc.)
+    }
   };
+
+  // If user is already signed in, redirect to home
+  if (user && !loading) {
+    router.push('/home');
+    return null;
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-custom flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500 mx-auto"></div>
+          <p className="mt-4 text-custom-secondary">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-custom flex items-center justify-center p-4">

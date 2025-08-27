@@ -1,0 +1,9 @@
+# Ignore sensitive files but allow .env.local for development
+.env
+.env.production
+.env.staging
+*.key
+*.pem
+*.p12
+secrets/
+credentials/
