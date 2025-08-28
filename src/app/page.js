@@ -15,16 +15,12 @@ export default function Home() {
     const savedTheme = localStorage.getItem('theme');
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
-    console.log('Theme detection:', { savedTheme, systemPrefersDark });
-    
     if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
       setIsDark(true);
       document.documentElement.classList.add('dark');
-      console.log('Setting dark mode');
     } else {
       setIsDark(false);
       document.documentElement.classList.remove('dark');
-      console.log('Setting light mode');
     }
   }, []);
 
@@ -51,11 +47,12 @@ export default function Home() {
     }
   };
 
-  // If user is already signed in, redirect to home
-  if (user && !loading) {
-    router.push('/notes');
-    return null;
-  }
+  // Redirect to notes if user is already signed in
+  useEffect(() => {
+    if (user && !loading) {
+      router.push('/notes');
+    }
+  }, [user, loading, router]);
 
   // Show loading state
   if (loading) {

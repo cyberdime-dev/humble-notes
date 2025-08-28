@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { useState, useEffect } from 'react';
+import { createNote, getUserNotes, updateNote, deleteNote } from '../../services/notesService';
 
 export default function HomePage() {
   const { user, logout, loading } = useAuth();
@@ -14,6 +15,8 @@ export default function HomePage() {
   const [quickNoteContent, setQuickNoteContent] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState(null);
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [notesError, setNotesError] = useState(null);
 
   // Theme management
   useEffect(() => {
@@ -21,33 +24,38 @@ export default function HomePage() {
     const savedTheme = localStorage.getItem('theme');
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
-    console.log('Theme detection:', { savedTheme, systemPrefersDark });
-    
     if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
       setIsDark(true);
       document.documentElement.classList.add('dark');
-      console.log('Setting dark mode');
     } else {
       setIsDark(false);
       document.documentElement.classList.remove('dark');
-      console.log('Setting light mode');
     }
   }, []);
 
-  // Load notes from localStorage
+  // Load notes from Firestore
   useEffect(() => {
-    const savedNotes = localStorage.getItem(`notes_${user?.uid}`);
-    if (savedNotes) {
-      setNotes(JSON.parse(savedNotes));
-    }
+    const loadNotes = async () => {
+      if (!user?.uid) return;
+      
+      setNotesLoading(true);
+      setNotesError(null);
+      
+      try {
+        const userNotes = await getUserNotes(user.uid);
+        setNotes(userNotes);
+      } catch (error) {
+        console.error('❌ Error loading notes:', error);
+        setNotesError(error.message);
+      } finally {
+        setNotesLoading(false);
+      }
+    };
+
+    loadNotes();
   }, [user?.uid]);
 
-  // Save notes to localStorage
-  useEffect(() => {
-    if (user?.uid) {
-      localStorage.setItem(`notes_${user.uid}`, JSON.stringify(notes));
-    }
-  }, [notes, user?.uid]);
+
 
   const toggleTheme = () => {
     const newTheme = !isDark;
@@ -75,17 +83,54 @@ export default function HomePage() {
     setShowQuickNote(false);
   };
 
-  const saveNote = (noteId, title, content) => {
-    const updatedNotes = notes.map(note => 
-      note.id === noteId 
-        ? { ...note, title, content, updatedAt: new Date().toISOString() }
-        : note
-    );
-    setNotes(updatedNotes);
-    
-    // Also update selectedNote if it matches the edited note
-    if (selectedNote && selectedNote.id === noteId) {
-      setSelectedNote({ ...selectedNote, title, content, updatedAt: new Date().toISOString() });
+  const saveNote = async (noteId, title, content) => {
+    if (!user?.uid) {
+      console.error('User not authenticated');
+      return;
+    }
+
+    try {
+      // Check if this is a new note (temporary ID) or existing note
+      const isNewNote = noteId.startsWith('temp_') || noteId.length < 10;
+      
+      if (isNewNote) {
+        // Create new note in Firestore
+        const newNoteData = { title, content };
+        const createdNote = await createNote(user.uid, newNoteData);
+        
+        // Update local state with the real note from Firestore
+        const updatedNotes = notes.map(note => 
+          note.id === noteId 
+            ? createdNote
+            : note
+        );
+        setNotes(updatedNotes);
+        
+        // Update selectedNote if it matches
+        if (selectedNote && selectedNote.id === noteId) {
+          setSelectedNote(createdNote);
+        }
+        
+      } else {
+        // Update existing note
+        const updatedNotes = notes.map(note => 
+          note.id === noteId 
+            ? { ...note, title, content, updatedAt: new Date().toISOString() }
+            : note
+        );
+        setNotes(updatedNotes);
+        
+        // Update selectedNote if it matches
+        if (selectedNote && selectedNote.id === noteId) {
+          setSelectedNote({ ...selectedNote, title, content, updatedAt: new Date().toISOString() });
+        }
+        
+        // Save to Firestore
+        await updateNote(noteId, user.uid, { title, content });
+      }
+    } catch (error) {
+      console.error('❌ Error saving note:', error);
+      alert('Failed to save note: ' + error.message);
     }
   };
 
@@ -94,13 +139,30 @@ export default function HomePage() {
     setShowDeleteConfirm(true);
   };
 
-  const confirmDelete = () => {
-    if (noteToDelete) {
-      setNotes(notes.filter(note => note.id !== noteToDelete));
-      localStorage.setItem('humble-notes', JSON.stringify(notes.filter(note => note.id !== noteToDelete)));
+  const confirmDelete = async () => {
+    if (!noteToDelete || !user?.uid) {
+      setShowDeleteConfirm(false);
+      setNoteToDelete(null);
+      return;
+    }
+
+    try {
+      // Delete from Firestore
+      await deleteNote(noteToDelete, user.uid);
+      
+      // Update local state
+      const updatedNotes = notes.filter(note => note.id !== noteToDelete);
+      setNotes(updatedNotes);
+      
       if (selectedNote?.id === noteToDelete) {
         setSelectedNote(null);
       }
+      
+      setShowDeleteConfirm(false);
+      setNoteToDelete(null);
+    } catch (error) {
+      console.error('❌ Error deleting note:', error);
+      alert('Failed to delete note: ' + error.message);
       setShowDeleteConfirm(false);
       setNoteToDelete(null);
     }
@@ -116,18 +178,24 @@ export default function HomePage() {
     setSelectedNote(null);
   };
 
-  const saveQuickNote = () => {
-    if (quickNoteContent.trim()) {
-      const newNote = {
-        id: Date.now().toString(),
+  const saveQuickNote = async () => {
+    if (!quickNoteContent.trim() || !user?.uid) {
+      return;
+    }
+
+    try {
+      const newNoteData = {
         title: quickNoteContent.split('\n')[0].slice(0, 50) || 'Quick Note',
-        content: quickNoteContent,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        content: quickNoteContent
       };
-      setNotes([newNote, ...notes]);
+      
+      const createdNote = await createNote(user.uid, newNoteData);
+      setNotes([createdNote, ...notes]);
       setQuickNoteContent('');
       setShowQuickNote(false);
+    } catch (error) {
+      console.error('❌ Error saving quick note:', error);
+      alert('Failed to save quick note: ' + error.message);
     }
   };
 
@@ -266,11 +334,45 @@ export default function HomePage() {
           {/* Notes List */}
           <div className="flex-1 overflow-y-auto p-4">
             <h3 className="text-sm font-semibold text-custom-secondary mb-3">Your Notes</h3>
-            {notes.length === 0 ? (
+            
+            {/* Loading State */}
+            {notesLoading && (
+              <div className="flex items-center justify-center py-8">
+                <div className="flex items-center gap-2 text-custom-secondary">
+                  <div className="w-4 h-4 border-2 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-sm">Loading notes...</span>
+                </div>
+              </div>
+            )}
+            
+            {/* Error State */}
+            {notesError && !notesLoading && (
+              <div className="text-center py-8">
+                <div className="text-red-500 dark:text-red-400 mb-2">
+                  <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-sm font-medium">Failed to load notes</p>
+                </div>
+                <p className="text-xs text-custom-secondary mb-3">{notesError}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-3 py-1 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-xs transition-all duration-200"
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+            
+            {/* Empty State */}
+            {!notesLoading && !notesError && notes.length === 0 && (
               <p className="text-sm text-custom-muted text-center py-8">
                 No notes yet. Create your first note!
               </p>
-            ) : (
+            )}
+            
+            {/* Notes List */}
+            {!notesLoading && !notesError && notes.length > 0 && (
               <div className="space-y-2">
                 {notes.map(note => (
                   <div
@@ -300,29 +402,29 @@ export default function HomePage() {
           {showQuickNote ? (
             /* Quick Note Editor */
             <div className="max-w-2xl mx-auto">
-              <div className="flex items-center justify-between mb-6">
+              <div className="mb-6">
                 <h2 className="text-2xl font-bold text-custom-primary">Quick Note</h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowQuickNote(false)}
-                    className="px-4 py-2 rounded-xl bg-custom-button hover:bg-custom-button border border-zinc-200 dark:border-zinc-700 text-custom-primary text-sm font-medium transition-all duration-200"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={saveQuickNote}
-                    className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium transition-all duration-200"
-                  >
-                    Save Note
-                  </button>
-                </div>
               </div>
               <textarea
                 value={quickNoteContent}
                 onChange={(e) => setQuickNoteContent(e.target.value)}
                 placeholder="Start writing your thoughts..."
-                className="w-full h-96 p-4 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 text-custom-primary placeholder-custom-secondary resize-none focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full h-96 p-4 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 text-custom-primary placeholder-custom-secondary resize-none focus:outline-none focus:ring-2 focus:ring-sky-500 mb-4"
               />
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={saveQuickNote}
+                  className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium transition-all duration-200"
+                >
+                  Create Note
+                </button>
+                <button
+                  onClick={() => setShowQuickNote(false)}
+                  className="px-4 py-2 rounded-xl bg-custom-button hover:bg-custom-button border border-zinc-200 dark:border-zinc-700 text-custom-primary text-sm font-medium transition-all duration-200"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           ) : selectedNote ? (
             /* Note Editor */

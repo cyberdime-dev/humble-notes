@@ -1,36 +1,100 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Humble Notes
+
+A beautiful, simple note-taking application built with Next.js, Firebase, and Tailwind CSS.
+
+## Features
+
+- ✨ **Beautiful UI** - Modern, responsive design with dark/light mode
+- 🔐 **Secure Authentication** - Google Sign-in with Firebase Auth
+- ☁️ **Cloud Storage** - Notes stored securely in Firebase Firestore
+- 📱 **Real-time Updates** - Auto-save with immediate UI feedback
+- 🎨 **Auto-generated Titles** - Titles automatically created from note content
+
+## Tech Stack
+
+- **Frontend**: Next.js 15, React 19, Tailwind CSS 4
+- **Backend**: Firebase Authentication, Firestore Database
+- **Deployment**: Vercel-ready
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js 18+ 
+- Firebase project with Authentication and Firestore enabled
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/humble-notes.git
+   cd humble-notes
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-## Learn More
+3. **Set up Firebase**
+   - Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+   - Enable Google Authentication
+   - Create a Firestore database
+   - Copy your Firebase config
 
-To learn more about Next.js, take a look at the following resources:
+4. **Configure environment variables**
+   Create a `.env.local` file in the root directory:
+   ```env
+   NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. **Set up Firestore Security Rules**
+   Deploy the security rules from `firestore.rules` to your Firebase project.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+6. **Create Firestore Index**
+   Create a composite index for the notes collection:
+   - Collection: `notes`
+   - Fields: `userId` (Ascending), `updatedAt` (Descending)
 
-## Deploy on Vercel
+7. **Run the development server**
+   ```bash
+   npm run dev
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+8. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deployment
+
+### Deploy to Vercel
+
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Add your environment variables in Vercel dashboard
+4. Deploy!
+
+### Environment Variables for Production
+
+Make sure to add all Firebase environment variables to your production environment.
+
+## Security
+
+- All Firebase configuration is handled through environment variables
+- Firestore security rules ensure users can only access their own notes
+- No sensitive data is logged or exposed in the client
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details
