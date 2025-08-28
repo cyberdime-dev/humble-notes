@@ -10,7 +10,7 @@ import {
   sendPasswordResetEmail,
   updateProfile
 } from 'firebase/auth';
-import { auth, googleProvider } from '../lib/firebase';
+import { auth, googleProvider, githubProvider } from '../lib/firebase';
 
 const AuthContext = createContext({});
 
@@ -39,6 +39,16 @@ export const AuthContextProvider = ({ children }) => {
       return result.user;
     } catch (error) {
       console.error('Error signing in with Google:', error);
+      throw error;
+    }
+  };
+
+  const signInWithGitHub = async () => {
+    try {
+      const result = await signInWithPopup(auth, githubProvider);
+      return result.user;
+    } catch (error) {
+      console.error('Error signing in with GitHub:', error);
       throw error;
     }
   };
@@ -91,6 +101,7 @@ export const AuthContextProvider = ({ children }) => {
     <AuthContext.Provider value={{
       user,
       signInWithGoogle,
+      signInWithGitHub,
       signUpWithEmail,
       signInWithEmail,
       resetPassword,

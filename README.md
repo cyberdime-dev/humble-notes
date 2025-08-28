@@ -18,7 +18,7 @@ A modern, beautiful note-taking application built with Next.js and Firebase. Sim
 - **Real-time Updates** - Instant UI feedback as you type
 
 ### 🔐 **Security & Authentication**
-- **Dual Authentication** - Google Sign-in or Email/Password
+- **Triple Authentication** - Google, GitHub, or Email/Password
 - **User Data Isolation** - Each user can only access their own notes
 - **Firestore Security Rules** - Server-side data protection
 - **Password Reset** - Secure password recovery functionality
@@ -72,8 +72,9 @@ npm install
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Create a new project
 3. Enable **Google Authentication** in Authentication → Sign-in method
-4. Enable **Email/Password** in Authentication → Sign-in method
-5. Create a **Firestore Database** in production mode
+4. Enable **GitHub Authentication** in Authentication → Sign-in method
+5. Enable **Email/Password** in Authentication → Sign-in method
+6. Create a **Firestore Database** in production mode
 
 #### Get Firebase Configuration
 1. Go to Project Settings → General
@@ -127,7 +128,7 @@ Open [http://localhost:3000](http://localhost:3000) to see your app!
 ## 📱 Usage
 
 ### Getting Started
-1. **Sign In/Sign Up** - Choose Google Sign-in or create an email/password account
+1. **Sign In/Sign Up** - Choose Google, GitHub, or create an email/password account
 2. **Create Notes** - Use the "+" button or "Quick Note" feature
 3. **Start Writing** - Type in the textarea, titles auto-generate from first line
 4. **Organize** - View recent notes and track your activity
@@ -137,7 +138,7 @@ Open [http://localhost:3000](http://localhost:3000) to see your app!
 - **Note Editor** - Full-featured editor with auto-save
 - **Sidebar** - Quick access to all your notes
 - **Theme Toggle** - Switch between light and dark modes
-- **Authentication** - Google OAuth or Email/Password with password reset
+- **Authentication** - Google OAuth, GitHub OAuth, or Email/Password with password reset
 
 ## 🚀 Deployment
 

@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, GithubAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 // Your Firebase configuration
@@ -43,5 +43,8 @@ export const db = getFirestore(app);
 
 // Create Google Auth Provider
 export const googleProvider = new GoogleAuthProvider();
+
+// Create GitHub Auth Provider
+export const githubProvider = new GithubAuthProvider();
 
 export default app;
