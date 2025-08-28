@@ -2,6 +2,8 @@
 
 A modern, beautiful note-taking application built with Next.js and Firebase. Simple, secure, and designed for productivity.
 
+🌐 **Live Demo**: [humble-notes.vercel.app](https://humble-notes.vercel.app)
+
 ![Humble Notes](https://img.shields.io/badge/Next.js-15.5.0-black?style=for-the-badge&logo=next.js)
 ![React](https://img.shields.io/badge/React-19.1.0-blue?style=for-the-badge&logo=react)
 ![Firebase](https://img.shields.io/badge/Firebase-12.1.0-orange?style=for-the-badge&logo=firebase)
@@ -19,7 +21,6 @@ A modern, beautiful note-taking application built with Next.js and Firebase. Sim
 - **Google Sign-in** - Secure authentication with Firebase Auth
 - **User Data Isolation** - Each user can only access their own notes
 - **Firestore Security Rules** - Server-side data protection
-- **Environment Variables** - No hardcoded secrets
 
 ### 📝 **Note Management**
 - **Auto-generated Titles** - Titles automatically created from note content
@@ -54,7 +55,7 @@ A modern, beautiful note-taking application built with Next.js and Firebase. Sim
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/humble-notes.git
+git clone https://github.com/cyberdime-dev/humble-notes.git
 cd humble-notes
 ```
 
@@ -184,7 +185,6 @@ humble-notes/
 - **Authentication Required** - All operations require valid user session
 - **Data Isolation** - Users can only access their own notes
 - **Server-side Validation** - Firestore security rules enforce access control
-- **No Sensitive Data in Code** - All secrets use environment variables
 
 ## 🤝 Contributing
 
@@ -218,23 +218,23 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Issues** - [GitHub Issues](https://github.com/yourusername/humble-notes/issues)
-- **Discussions** - [GitHub Discussions](https://github.com/yourusername/humble-notes/discussions)
-- **Email** - your-email@example.com
+- **Issues** - [GitHub Issues](https://github.com/cyberdime-dev/humble-notes/issues)
+- **Discussions** - [GitHub Discussions](https://github.com/cyberdime-dev/humble-notes/discussions)
+- **Email** - info@cyberdime.io
 
 ---
 
 <div align="center">
-  <p>Made with ❤️ by [Your Name]</p>
+  <p>Made with ❤️ by John Norris @ Cyberdime</p>
   <p>
-    <a href="https://github.com/yourusername/humble-notes/stargazers">
-      <img src="https://img.shields.io/github/stars/yourusername/humble-notes" alt="Stars">
+    <a href="https://github.com/cyberdime-dev/humble-notes/stargazers">
+      <img src="https://img.shields.io/github/stars/cyberdime-dev/humble-notes" alt="Stars">
     </a>
-    <a href="https://github.com/yourusername/humble-notes/network">
-      <img src="https://img.shields.io/github/forks/yourusername/humble-notes" alt="Forks">
+    <a href="https://github.com/cyberdime-dev/humble-notes/network">
+      <img src="https://img.shields.io/github/forks/cyberdime-dev/humble-notes" alt="Forks">
     </a>
-    <a href="https://github.com/yourusername/humble-notes/issues">
-      <img src="https://img.shields.io/github/issues/yourusername/humble-notes" alt="Issues">
+    <a href="https://github.com/cyberdime-dev/humble-notes/issues">
+      <img src="https://img.shields.io/github/issues/cyberdime-dev/humble-notes" alt="Issues">
     </a>
   </p>
 </div>
