@@ -2,11 +2,44 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../contexts/AuthContext';
-import ThemeToggle from '../components/ThemeToggle';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
   const { signInWithGoogle, user, loading } = useAuth();
   const router = useRouter();
+  const [isDark, setIsDark] = useState(false);
+
+  // Theme management
+  useEffect(() => {
+    // Check for saved theme preference or default to system preference
+    const savedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    console.log('Theme detection:', { savedTheme, systemPrefersDark });
+    
+    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+      setIsDark(true);
+      document.documentElement.classList.add('dark');
+      console.log('Setting dark mode');
+    } else {
+      setIsDark(false);
+      document.documentElement.classList.remove('dark');
+      console.log('Setting light mode');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = !isDark;
+    setIsDark(newTheme);
+    
+    if (newTheme) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -38,7 +71,22 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-custom flex items-center justify-center p-4">
-      <ThemeToggle />
+      {/* Theme toggle */}
+      <button
+        onClick={toggleTheme}
+        className="absolute top-6 right-6 p-3 rounded-2xl bg-custom-button hover:bg-custom-button backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 transition-all duration-200 shadow-sm"
+        aria-label="Toggle dark mode"
+      >
+        {isDark ? (
+          <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+          </svg>
+        ) : (
+          <svg className="w-5 h-5 text-zinc-600" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+          </svg>
+        )}
+      </button>
 
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
@@ -75,6 +123,10 @@ export default function Home() {
 
         <p className="text-sm text-center text-custom-muted mt-8">
           Simple, secure, and always with you
+        </p>
+
+        <p className="text-xs text-center text-custom-muted mt-4 opacity-60">
+          Please disable any pop-up blockers.
         </p>
       </div>
     </div>
