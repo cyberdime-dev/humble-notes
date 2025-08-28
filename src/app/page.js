@@ -5,9 +5,16 @@ import { useAuth } from '../contexts/AuthContext';
 import { useState, useEffect } from 'react';
 
 export default function Home() {
-  const { signInWithGoogle, user, loading } = useAuth();
+  const { signInWithGoogle, signUpWithEmail, signInWithEmail, resetPassword, user, loading } = useAuth();
   const router = useRouter();
   const [isDark, setIsDark] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [isResetPassword, setIsResetPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [error, setError] = useState('');
 
   // Theme management
   useEffect(() => {
@@ -39,12 +46,72 @@ export default function Home() {
 
   const handleGoogleSignIn = async () => {
     try {
+      setAuthLoading(true);
+      setError('');
       await signInWithGoogle();
       router.push('/notes');
     } catch (error) {
-      console.error('Sign in error:', error);
-      // You can add error handling here (toast notification, etc.)
+      setError('Failed to sign in with Google. Please try again.');
+    } finally {
+      setAuthLoading(false);
     }
+  };
+
+  const handleEmailAuth = async (e) => {
+    e.preventDefault();
+    try {
+      setAuthLoading(true);
+      setError('');
+
+      if (isResetPassword) {
+        await resetPassword(email);
+        setError('Password reset email sent! Check your inbox.');
+        setIsResetPassword(false);
+        return;
+      }
+
+      if (isSignUp) {
+        await signUpWithEmail(email, password, displayName);
+      } else {
+        await signInWithEmail(email, password);
+      }
+
+      router.push('/notes');
+    } catch (error) {
+      setError(getErrorMessage(error.code));
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const getErrorMessage = (errorCode) => {
+    switch (errorCode) {
+      case 'auth/user-not-found':
+        return 'No account found with this email address.';
+      case 'auth/wrong-password':
+        return 'Incorrect password. Please try again.';
+      case 'auth/email-already-in-use':
+        return 'An account with this email already exists.';
+      case 'auth/weak-password':
+        return 'Password should be at least 6 characters long.';
+      case 'auth/invalid-email':
+        return 'Please enter a valid email address.';
+      case 'auth/too-many-requests':
+        return 'Too many failed attempts. Please try again later.';
+      default:
+        return 'An error occurred. Please try again.';
+    }
+  };
+
+  const toggleMode = () => {
+    setIsSignUp(!isSignUp);
+    setIsResetPassword(false);
+    setError('');
+  };
+
+  const toggleResetPassword = () => {
+    setIsResetPassword(!isResetPassword);
+    setError('');
   };
 
   // Redirect to notes if user is already signed in
@@ -98,13 +165,134 @@ export default function Home() {
           Humble Notes
         </h1>
 
-        <p className="text-lg text-center text-custom-secondary mb-12 leading-relaxed">
-          Capture your thoughts, ideas, and memories in a beautiful, simple way. 
-          Your personal space for notes that matter.
+        <p className="text-lg text-center text-custom-secondary mb-8 leading-relaxed">
+          {isResetPassword ? 'Reset your password' : isSignUp ? 'Create your account' : 'Welcome back'}
         </p>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+            <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Email/Password Form */}
+        {!isResetPassword && (
+          <form onSubmit={handleEmailAuth} className="mb-6">
+            {isSignUp && (
+              <div className="mb-4">
+                <label htmlFor="displayName" className="block text-sm font-medium text-custom-primary mb-2">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  id="displayName"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 text-custom-primary placeholder-custom-secondary focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                  placeholder="Enter your full name"
+                  required={isSignUp}
+                />
+              </div>
+            )}
+
+            <div className="mb-4">
+              <label htmlFor="email" className="block text-sm font-medium text-custom-primary mb-2">
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 text-custom-primary placeholder-custom-secondary focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+
+            <div className="mb-6">
+              <label htmlFor="password" className="block text-sm font-medium text-custom-primary mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 text-custom-primary placeholder-custom-secondary focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                placeholder="Enter your password"
+                required
+                minLength={6}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={authLoading}
+              className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-sky-500 hover:bg-sky-600 disabled:bg-sky-400 text-white font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              {authLoading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              )}
+              <span>{authLoading ? 'Processing...' : isSignUp ? 'Create Account' : 'Sign In'}</span>
+            </button>
+          </form>
+        )}
+
+        {/* Reset Password Form */}
+        {isResetPassword && (
+          <form onSubmit={handleEmailAuth} className="mb-6">
+            <div className="mb-6">
+              <label htmlFor="resetEmail" className="block text-sm font-medium text-custom-primary mb-2">
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="resetEmail"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 text-custom-primary placeholder-custom-secondary focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-200"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={authLoading}
+              className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-sky-500 hover:bg-sky-600 disabled:bg-sky-400 text-white font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              {authLoading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              )}
+              <span>{authLoading ? 'Sending...' : 'Send Reset Email'}</span>
+            </button>
+          </form>
+        )}
+
+        {/* Divider */}
+        <div className="relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-zinc-200 dark:border-zinc-700"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-gradient-custom text-custom-secondary">or</span>
+          </div>
+        </div>
+
+        {/* Google Sign In */}
         <button
           onClick={handleGoogleSignIn}
+          disabled={authLoading}
           className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-custom-button hover:bg-custom-button border border-zinc-200 dark:border-zinc-700 transition-all duration-200 shadow-sm hover:shadow-md group"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -118,11 +306,37 @@ export default function Home() {
           </span>
         </button>
 
-        <p className="text-sm text-center text-custom-muted mt-8">
-          Simple, secure, and always with you
-        </p>
+        {/* Toggle Links */}
+        <div className="text-center mt-6 space-y-2">
+          <button
+            onClick={toggleMode}
+            className="text-sm text-sky-500 hover:text-sky-600 transition-colors duration-200"
+          >
+            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+          </button>
 
-        <p className="text-xs text-center text-custom-muted mt-4 opacity-60">
+          {!isSignUp && !isResetPassword && (
+            <div>
+              <button
+                onClick={toggleResetPassword}
+                className="text-sm text-custom-secondary hover:text-custom-primary transition-colors duration-200"
+              >
+                Forgot your password?
+              </button>
+            </div>
+          )}
+
+          {isResetPassword && (
+            <button
+              onClick={toggleResetPassword}
+              className="text-sm text-custom-secondary hover:text-custom-primary transition-colors duration-200"
+            >
+              Back to sign in
+            </button>
+          )}
+        </div>
+
+        <p className="text-xs text-center text-custom-muted mt-8 opacity-60">
           Please disable any pop-up blockers.
         </p>
       </div>

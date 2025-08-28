@@ -18,9 +18,11 @@ A modern, beautiful note-taking application built with Next.js and Firebase. Sim
 - **Real-time Updates** - Instant UI feedback as you type
 
 ### 🔐 **Security & Authentication**
-- **Google Sign-in** - Secure authentication with Firebase Auth
+- **Dual Authentication** - Google Sign-in or Email/Password
 - **User Data Isolation** - Each user can only access their own notes
 - **Firestore Security Rules** - Server-side data protection
+- **Password Reset** - Secure password recovery functionality
+- **Environment Variables** - No hardcoded secrets
 
 ### 📝 **Note Management**
 - **Auto-generated Titles** - Titles automatically created from note content
@@ -69,8 +71,9 @@ npm install
 #### Create Firebase Project
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Create a new project
-3. Enable **Google Authentication**
-4. Create a **Firestore Database** in production mode
+3. Enable **Google Authentication** in Authentication → Sign-in method
+4. Enable **Email/Password** in Authentication → Sign-in method
+5. Create a **Firestore Database** in production mode
 
 #### Get Firebase Configuration
 1. Go to Project Settings → General
@@ -124,9 +127,9 @@ Open [http://localhost:3000](http://localhost:3000) to see your app!
 ## 📱 Usage
 
 ### Getting Started
-1. **Sign In** - Click "Continue with Google" to authenticate
+1. **Sign In/Sign Up** - Choose Google Sign-in or create an email/password account
 2. **Create Notes** - Use the "+" button or "Quick Note" feature
-3. **Start Writing** - Type in the textarea, titles auto-generate
+3. **Start Writing** - Type in the textarea, titles auto-generate from first line
 4. **Organize** - View recent notes and track your activity
 
 ### Features Overview
@@ -134,6 +137,7 @@ Open [http://localhost:3000](http://localhost:3000) to see your app!
 - **Note Editor** - Full-featured editor with auto-save
 - **Sidebar** - Quick access to all your notes
 - **Theme Toggle** - Switch between light and dark modes
+- **Authentication** - Google OAuth or Email/Password with password reset
 
 ## 🚀 Deployment
 

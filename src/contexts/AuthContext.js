@@ -1,10 +1,14 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  signInWithPopup, 
-  signOut, 
-  onAuthStateChanged 
+import {
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updateProfile
 } from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
 
@@ -39,6 +43,41 @@ export const AuthContextProvider = ({ children }) => {
     }
   };
 
+  const signUpWithEmail = async (email, password, displayName) => {
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+
+      // Update profile with display name
+      if (displayName) {
+        await updateProfile(result.user, { displayName });
+      }
+
+      return result.user;
+    } catch (error) {
+      console.error('Error signing up with email:', error);
+      throw error;
+    }
+  };
+
+  const signInWithEmail = async (email, password) => {
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      return result.user;
+    } catch (error) {
+      console.error('Error signing in with email:', error);
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       await signOut(auth);
@@ -49,7 +88,15 @@ export const AuthContextProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, signInWithGoogle, logout, loading }}>
+    <AuthContext.Provider value={{
+      user,
+      signInWithGoogle,
+      signUpWithEmail,
+      signInWithEmail,
+      resetPassword,
+      logout,
+      loading
+    }}>
       {children}
     </AuthContext.Provider>
   );
