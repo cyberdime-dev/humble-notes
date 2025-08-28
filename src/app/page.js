@@ -44,7 +44,7 @@ export default function Home() {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle();
-      router.push('/home');
+      router.push('/notes');
     } catch (error) {
       console.error('Sign in error:', error);
       // You can add error handling here (toast notification, etc.)
@@ -53,7 +53,7 @@ export default function Home() {
 
   // If user is already signed in, redirect to home
   if (user && !loading) {
-    router.push('/home');
+    router.push('/notes');
     return null;
   }
 

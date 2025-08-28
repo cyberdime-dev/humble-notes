@@ -76,11 +76,17 @@ export default function HomePage() {
   };
 
   const saveNote = (noteId, title, content) => {
-    setNotes(notes.map(note => 
+    const updatedNotes = notes.map(note => 
       note.id === noteId 
         ? { ...note, title, content, updatedAt: new Date().toISOString() }
         : note
-    ));
+    );
+    setNotes(updatedNotes);
+    
+    // Also update selectedNote if it matches the edited note
+    if (selectedNote && selectedNote.id === noteId) {
+      setSelectedNote({ ...selectedNote, title, content, updatedAt: new Date().toISOString() });
+    }
   };
 
   const handleDeleteClick = (noteId) => {
@@ -325,8 +331,8 @@ export default function HomePage() {
                 <input
                   value={selectedNote.title}
                   onChange={(e) => saveNote(selectedNote.id, e.target.value, selectedNote.content)}
-                  className="text-2xl font-bold text-custom-primary bg-transparent border-none outline-none"
-                  placeholder="Note title"
+                  className="text-2xl font-bold text-custom-primary bg-transparent border-none outline-none hover:bg-zinc-50 dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-700 focus:ring-2 focus:ring-sky-500 focus:ring-opacity-50 rounded-lg px-3 py-2 transition-all duration-200 w-full"
+                  placeholder="Note title" title="Click to edit title"
                 />
                 <div className="flex gap-2">
                   <button
