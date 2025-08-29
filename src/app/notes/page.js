@@ -209,6 +209,13 @@ export default function HomePage() {
     }
   };
 
+  // Helper function to generate title from content
+  const generateTitleFromContent = (content) => {
+    if (!content || !content.trim()) return 'Untitled Note';
+    const firstLine = content.split('\n')[0].trim();
+    return firstLine.length > 0 ? firstLine.slice(0, 50) : 'Untitled Note';
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -514,7 +521,9 @@ export default function HomePage() {
             /* Quick Note Editor */
             <div className="max-w-2xl mx-auto">
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Quick Note</h2>
+                <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                  {generateTitleFromContent(quickNoteContent)}
+                </h2>
               </div>
               <textarea
                 value={quickNoteContent}
@@ -541,12 +550,9 @@ export default function HomePage() {
             /* Note Editor */
             <div className="max-w-2xl mx-auto">
               <div className="flex items-center justify-between mb-6">
-                <input
-                  value={selectedNote.title}
-                  onChange={(e) => saveNote(selectedNote.id, e.target.value, selectedNote.content)}
-                  className="text-2xl font-bold text-custom-primary bg-transparent border-none outline-none hover:bg-zinc-50 dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-700 focus:ring-2 focus:ring-sky-500 focus:ring-opacity-50 rounded-lg px-3 py-2 transition-all duration-200 w-full"
-                  placeholder="Note title" title="Click to edit title"
-                />
+                <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                  {generateTitleFromContent(selectedNote.content)}
+                </h2>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setSelectedNote(null)}
@@ -582,23 +588,16 @@ export default function HomePage() {
               </div>
 
               <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {/* Quick Note Card */}
-                <div 
+                {/* Create Note Button */}
+                <button 
                   onClick={handleQuickNote}
-                  className="p-4 md:p-6 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 hover:shadow-md transition-all duration-200 cursor-pointer"
+                  className="p-4 md:p-6 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-medium transition-all duration-200 flex items-center justify-center gap-3"
                 >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-xl bg-sky-100 dark:bg-sky-900 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-sky-600 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                    </div>
-                    <h3 className="font-semibold text-custom-primary">Quick Note</h3>
-                  </div>
-                  <p className="text-custom-secondary text-sm">
-                    Start writing your thoughts...
-                  </p>
-                </div>
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Create a Humble Note
+                </button>
 
                 {/* Recent Notes */}
                 <div className="p-6 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700">
