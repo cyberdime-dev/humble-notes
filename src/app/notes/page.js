@@ -9,6 +9,8 @@ export default function HomePage() {
   const { user, logout, loading } = useAuth();
   const router = useRouter();
   const [isDark, setIsDark] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarSearch, setSidebarSearch] = useState('');
   const [notes, setNotes] = useState([]);
   const [selectedNote, setSelectedNote] = useState(null);
   const [showQuickNote, setShowQuickNote] = useState(false);
@@ -70,6 +72,13 @@ export default function HomePage() {
     }
   };
 
+  // Auto-close sidebar on mobile when navigating to a note
+  const closeSidebarOnMobile = () => {
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) {
+      setSidebarOpen(false);
+    }
+  };
+
   const createNewNote = () => {
     const newNote = {
       id: Date.now().toString(),
@@ -81,6 +90,7 @@ export default function HomePage() {
     setNotes([newNote, ...notes]);
     setSelectedNote(newNote);
     setShowQuickNote(false);
+    closeSidebarOnMobile();
   };
 
   const saveNote = async (noteId, title, content) => {
@@ -238,13 +248,28 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-custom">
       {/* Header */}
-      <header className="flex items-center justify-between p-6">
+      <header className="flex items-center justify-between p-4 md:p-6">
         <div className="flex items-center gap-3">
-          <img src="/favicon.svg" alt="Humble Notes" className="w-10 h-10 rounded-2xl" />
-          <h1 className="text-2xl font-bold text-custom-primary">Humble Notes</h1>
+          <img
+            src="/favicon.svg"
+            alt="Humble Notes"
+            className="w-10 h-10 rounded-2xl cursor-pointer md:cursor-default select-none"
+            onClick={() => setSidebarOpen(prev => !prev)}
+          />
+          <h1 className="hidden sm:block text-2xl font-bold text-custom-primary">Humble Notes</h1>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-2 md:gap-4">
+          {/* Mobile: Toggle Sidebar */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-3 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 transition-all duration-200 shadow-sm md:hidden"
+            aria-label="Toggle sidebar"
+          >
+            <svg className="w-5 h-5 text-custom-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
           {/* New Note Button */}
           <button
             onClick={createNewNote}
@@ -264,7 +289,7 @@ export default function HomePage() {
           >
             {isDark ? (
               <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
               </svg>
             ) : (
               <svg className="w-5 h-5 text-zinc-600" fill="currentColor" viewBox="0 0 20 20">
@@ -311,11 +336,31 @@ export default function HomePage() {
       </header>
 
       {/* Main Layout */}
-      <div className="flex h-[calc(100vh-120px)]">
+      <div className="flex h-[calc(100vh-96px)] md:h-[calc(100vh-120px)]">
         {/* Left Sidebar */}
-        <div className="w-80 bg-custom-button border-r border-zinc-200 dark:border-zinc-700 flex flex-col">
+        {/* Mobile overlay to close sidebar by tapping outside */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/30 md:hidden z-30"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+        <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:static z-40 top-[72px] md:top-auto left-0 w-72 md:w-80 h-[calc(100vh-72px)] md:h-auto bg-custom-button border-r border-zinc-200 dark:border-zinc-700 flex flex-col transition-transform duration-200`}>
           {/* New Note Button */}
-          <div className="p-4 border-b border-zinc-200 dark:border-zinc-700">
+          {/* Mobile header inside sidebar */}
+          <div className="p-3 md:hidden flex items-center justify-between border-b border-zinc-200 dark:border-zinc-700">
+            <span className="text-sm font-semibold text-custom-primary">Menu</span>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="p-2 rounded-xl border border-zinc-200 dark:border-zinc-700"
+              aria-label="Close menu"
+            >
+              <svg className="w-4 h-4 text-custom-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="p-3 md:p-4 border-b border-zinc-200 dark:border-zinc-700">
             <button
               onClick={createNewNote}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-medium transition-all duration-200"
@@ -328,7 +373,21 @@ export default function HomePage() {
           </div>
 
           {/* Notes List */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-3 md:p-4">
+            {/* Search */}
+            <div className="mb-3">
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
+                </svg>
+                <input
+                  value={sidebarSearch}
+                  onChange={(e) => setSidebarSearch(e.target.value)}
+                  placeholder="Search notes..."
+                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                />
+              </div>
+            </div>
             <h3 className="text-sm font-semibold text-custom-secondary mb-3">Your Notes</h3>
             
             {/* Loading State */}
@@ -370,11 +429,18 @@ export default function HomePage() {
             {/* Notes List */}
             {!notesLoading && !notesError && notes.length > 0 && (
               <div className="space-y-2">
-                {notes.map(note => (
+                {notes
+                  .filter(n =>
+                    sidebarSearch.trim() === ''
+                      ? true
+                      : (n.title || '').toLowerCase().includes(sidebarSearch.toLowerCase()) ||
+                        (n.content || '').toLowerCase().includes(sidebarSearch.toLowerCase())
+                  )
+                  .map(note => (
                   <div
                     key={note.id}
-                    onClick={() => setSelectedNote(note)}
-                    className={`p-3 rounded-xl cursor-pointer transition-all duration-200 ${
+                    onClick={() => { setSelectedNote(note); closeSidebarOnMobile(); }}
+                    className={`p-3 rounded-xl cursor-pointer transition-all duration-200 ring-offset-2 focus:outline-none focus:ring-2 focus:ring-sky-500 ${
                       selectedNote?.id === note.id
                         ? 'bg-sky-100 dark:bg-sky-900 border border-sky-200 dark:border-sky-700'
                         : 'bg-note-card hover:bg-note-card border border-gray-200 dark:border-gray-700'
@@ -391,21 +457,70 @@ export default function HomePage() {
               </div>
             )}
           </div>
+
+          {/* Mobile-only: user controls at bottom */}
+          <div className="md:hidden mt-auto border-t pt-4 pb-4 px-3 border-zinc-200 dark:border-zinc-700">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                {user?.photoURL ? (
+                  <img 
+                    src={user.photoURL} 
+                    alt={user?.displayName || 'User'} 
+                    className="w-8 h-8 rounded-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div className="w-8 h-8 rounded-full bg-sky-500 flex items-center justify-center" style={{ display: user?.photoURL ? 'none' : 'flex' }}>
+                  <span className="text-white text-sm font-medium">{user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium" style={{ color: isDark ? 'white' : 'black' }}>{user?.displayName || 'User'}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">{user?.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
+                aria-label="Toggle dark mode"
+              >
+                {isDark ? (
+                  <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 text-zinc-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleLogout}
+                className="w-full px-4 py-2 rounded-xl bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 text-sm font-medium transition-all duration-200"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex-1 p-4 md:p-6 overflow-y-auto">
           {showQuickNote ? (
             /* Quick Note Editor */
             <div className="max-w-2xl mx-auto">
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-custom-primary">Quick Note</h2>
+                <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Quick Note</h2>
               </div>
               <textarea
                 value={quickNoteContent}
                 onChange={(e) => setQuickNoteContent(e.target.value)}
                 placeholder="Start writing your thoughts..."
-                className="w-full h-96 p-4 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 text-custom-primary placeholder-custom-secondary resize-none focus:outline-none focus:ring-2 focus:ring-sky-500 mb-4"
+                className="w-full h-[50vh] md:h-96 p-4 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 text-custom-primary placeholder-custom-secondary resize-none focus:outline-none focus:ring-2 focus:ring-sky-500 mb-4"
               />
               <div className="flex gap-2 justify-end">
                 <button
@@ -451,26 +566,26 @@ export default function HomePage() {
                 value={selectedNote.content}
                 onChange={(e) => saveNote(selectedNote.id, selectedNote.title, e.target.value)}
                 placeholder="Start writing your note..."
-                className="w-full h-96 p-4 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 text-custom-primary placeholder-custom-secondary resize-none focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full h-[55vh] md:h-96 p-4 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 text-custom-primary placeholder-custom-secondary resize-none focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
             </div>
           ) : (
             /* Dashboard */
             <div>
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold text-custom-primary mb-4">
+              <div className="text-center mb-8 md:mb-12">
+                <h2 className="text-2xl md:text-3xl font-bold text-custom-primary mb-4">
                   Welcome back, {user?.displayName?.split(' ')[0] || 'User'}!
                 </h2>
-                <p className="text-lg text-custom-secondary">
+                <p className="text-base md:text-lg text-custom-secondary">
                   Ready to capture your thoughts and ideas?
                 </p>
               </div>
 
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {/* Quick Note Card */}
                 <div 
                   onClick={handleQuickNote}
-                  className="p-6 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 hover:shadow-md transition-all duration-200 cursor-pointer"
+                  className="p-4 md:p-6 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 hover:shadow-md transition-all duration-200 cursor-pointer"
                 >
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-8 h-8 rounded-xl bg-sky-100 dark:bg-sky-900 flex items-center justify-center">
