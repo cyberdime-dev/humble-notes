@@ -631,11 +631,11 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="w-full max-w-[1080px] mx-auto grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {/* Create Note Button */}
                 <button 
                   onClick={handleQuickNote}
-                  className="p-4 md:p-6 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-medium transition-all duration-200 flex items-center justify-center gap-3"
+                  className="sm:hidden p-4 md:p-6 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-medium transition-all duration-200 flex items-center justify-center gap-3"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -644,7 +644,7 @@ export default function HomePage() {
                 </button>
 
                 {/* Recent Notes */}
-                <div className="p-6 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700">
+                <div className="p-6 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 lg:col-span-2">
                   <h3 className="font-semibold text-custom-primary mb-4">Recent Notes</h3>
                   {recentNotes.length === 0 ? (
                     <p className="text-custom-secondary text-sm">No notes yet</p>
@@ -669,7 +669,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Stats */}
-                <div className="p-6 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700">
+                <div className="p-6 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 lg:col-span-1">
                   <h3 className="font-semibold text-custom-primary mb-4">Your Stats</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between">
