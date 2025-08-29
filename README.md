@@ -212,14 +212,16 @@ We welcome contributions! Please follow these steps:
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT) - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- **Next.js Team** - For the amazing React framework
-- **Firebase Team** - For the powerful backend services
-- **Tailwind CSS** - For the utility-first CSS framework
-- **Vercel** - For seamless deployment and hosting
+- **[Team Treehouse](https://teamtreehouse.com/about)** - For providing the excellent tutorial that inspired this project
+- **[John Norris](https://teamtreehouse.com/profiles/johnnorris)** - Student of Treehouse and creator of Humble Notes
+- **[Next.js Team](https://nextjs.org/)** - For the amazing React framework
+- **[Firebase Team](https://firebase.google.com/)** - For the powerful backend services
+- **[Tailwind CSS](https://tailwindcss.com/)** - For the utility-first CSS framework
+- **[Vercel](https://vercel.com/)** - For seamless deployment and hosting
 
 ## 📞 Support
 

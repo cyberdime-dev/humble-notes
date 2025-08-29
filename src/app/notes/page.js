@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createNote, getUserNotes, updateNote, deleteNote } from '../../services/notesService';
 
 export default function HomePage() {
@@ -19,6 +19,8 @@ export default function HomePage() {
   const [noteToDelete, setNoteToDelete] = useState(null);
   const [notesLoading, setNotesLoading] = useState(false);
   const [notesError, setNotesError] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const saveTimeoutRef = useRef(null);
 
   // Theme management
   useEffect(() => {
@@ -33,6 +35,13 @@ export default function HomePage() {
       setIsDark(false);
       document.documentElement.classList.remove('dark');
     }
+    
+    // Cleanup any pending debounced save on unmount
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Load notes from Firestore
@@ -81,7 +90,7 @@ export default function HomePage() {
 
   const createNewNote = () => {
     const newNote = {
-      id: Date.now().toString(),
+      id: `temp_${Date.now()}`,
       title: 'Untitled Note',
       content: '',
       createdAt: new Date().toISOString(),
@@ -99,49 +108,55 @@ export default function HomePage() {
       return;
     }
 
-    try {
-      // Check if this is a new note (temporary ID) or existing note
-      const isNewNote = noteId.startsWith('temp_') || noteId.length < 10;
-      
-      if (isNewNote) {
-        // Create new note in Firestore
-        const newNoteData = { title, content };
-        const createdNote = await createNote(user.uid, newNoteData);
-        
-        // Update local state with the real note from Firestore
-        const updatedNotes = notes.map(note => 
-          note.id === noteId 
-            ? createdNote
-            : note
-        );
-        setNotes(updatedNotes);
-        
-        // Update selectedNote if it matches
-        if (selectedNote && selectedNote.id === noteId) {
-          setSelectedNote(createdNote);
-        }
-        
-      } else {
-        // Update existing note
-        const updatedNotes = notes.map(note => 
-          note.id === noteId 
-            ? { ...note, title, content, updatedAt: new Date().toISOString() }
-            : note
-        );
-        setNotes(updatedNotes);
-        
-        // Update selectedNote if it matches
-        if (selectedNote && selectedNote.id === noteId) {
-          setSelectedNote({ ...selectedNote, title, content, updatedAt: new Date().toISOString() });
-        }
-        
-        // Save to Firestore
-        await updateNote(noteId, user.uid, { title, content });
-      }
-    } catch (error) {
-      console.error('❌ Error saving note:', error);
-      alert('Failed to save note: ' + error.message);
+    // Clear any pending save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
     }
+
+    // Update local UI state immediately (functional update to avoid stale closures)
+    setNotes(prevNotes => prevNotes.map(note =>
+      note.id === noteId
+        ? { ...note, title, content, updatedAt: new Date().toISOString() }
+        : note
+    ));
+
+    setSelectedNote(prev =>
+      prev && prev.id === noteId
+        ? { ...prev, title, content, updatedAt: new Date().toISOString() }
+        : prev
+    );
+
+    // Debounce actual Firestore save by 1.5s
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        setIsSaving(true);
+
+        // Check if this is a new note (temporary ID) or existing note
+        const isNewNote = noteId.startsWith('temp_');
+
+        if (isNewNote) {
+          const newNoteData = { title, content };
+          const createdNote = await createNote(user.uid, newNoteData);
+
+          // Replace placeholder with created note (functional update)
+          setNotes(prevNotes => prevNotes.map(note =>
+            note.id === noteId ? createdNote : note
+          ));
+
+          setSelectedNote(prev => (prev && prev.id === noteId ? createdNote : prev));
+        } else {
+          await updateNote(noteId, user.uid, { title, content });
+        }
+
+        setTimeout(() => setIsSaving(false), 500);
+      } catch (error) {
+        console.error('❌ Error saving note:', error);
+        alert('Failed to save note: ' + error.message);
+        setIsSaving(false);
+      } finally {
+        saveTimeoutRef.current = null;
+      }
+    }, 1500);
   };
 
   const handleDeleteClick = (noteId) => {
@@ -245,12 +260,11 @@ export default function HomePage() {
 
   const recentNotes = notes.slice(0, 3);
   const totalNotes = notes.length;
-  const thisWeekNotes = notes.filter(note => {
-    const noteDate = new Date(note.createdAt);
+  const thisWeekNotes = (() => {
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
-    return noteDate > weekAgo;
-  }).length;
+    return notes.filter(note => new Date(note.createdAt) > weekAgo).length;
+  })();
 
   return (
     <div className="min-h-screen bg-gradient-custom">
@@ -356,7 +370,7 @@ export default function HomePage() {
           {/* New Note Button */}
           {/* Mobile header inside sidebar */}
           <div className="p-3 md:hidden flex items-center justify-between border-b border-zinc-200 dark:border-zinc-700">
-            <span className="text-sm font-semibold text-custom-primary">Menu</span>
+            <span className="text-sm font-semibold text-custom-primary">Humble Notes</span>
             <button
               onClick={() => setSidebarOpen(false)}
               className="p-2 rounded-xl border border-zinc-200 dark:border-zinc-700"
@@ -518,7 +532,7 @@ export default function HomePage() {
         {/* Main Content */}
         <div className="flex-1 p-4 md:p-6 overflow-y-auto">
           {showQuickNote ? (
-            /* Quick Note Editor */
+            /* New Note */
             <div className="max-w-2xl mx-auto">
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
@@ -534,9 +548,12 @@ export default function HomePage() {
               <div className="flex gap-2 justify-end">
                 <button
                   onClick={saveQuickNote}
-                  className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium transition-all duration-200"
+                  className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium transition-all duration-200 flex items-center gap-2"
                 >
-                  Create Note
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                  </svg>
+                  Save
                 </button>
                 <button
                   onClick={() => setShowQuickNote(false)}
@@ -553,27 +570,54 @@ export default function HomePage() {
                 <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
                   {generateTitleFromContent(selectedNote.content)}
                 </h2>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setSelectedNote(null)}
-                    className="px-4 py-2 rounded-xl bg-custom-button hover:bg-custom-button border border-zinc-200 dark:border-zinc-700 text-custom-primary text-sm font-medium transition-all duration-200"
-                  >
-                    Back
-                  </button>
-                  <button
-                    onClick={() => handleDeleteClick(selectedNote.id)}
-                    className="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-all duration-200"
-                  >
-                    Delete
-                  </button>
-                </div>
+                <button
+                  onClick={() => setSelectedNote(null)}
+                  className="p-2 rounded-xl bg-custom-button hover:bg-custom-button border border-zinc-200 dark:border-zinc-700 text-custom-primary transition-all duration-200"
+                  aria-label="Close note"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
               <textarea
                 value={selectedNote.content}
                 onChange={(e) => saveNote(selectedNote.id, selectedNote.title, e.target.value)}
                 placeholder="Start writing your note..."
-                className="w-full h-[55vh] md:h-96 p-4 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 text-custom-primary placeholder-custom-secondary resize-none focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full h-[55vh] md:h-96 p-4 rounded-2xl bg-custom-button border border-zinc-200 dark:border-zinc-700 text-custom-primary placeholder-custom-secondary resize-none focus:outline-none focus:ring-2 focus:ring-sky-500 mb-4"
               />
+              <div className="flex items-center gap-2 justify-end mb-2">
+                {/* Save Animation */}
+                {isSaving && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-green-100 dark:bg-green-900 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-300 text-sm font-medium animate-pulse">
+                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Saving...
+                  </div>
+                )}
+                
+                <button
+                  onClick={() => setSelectedNote(null)}
+                  className="px-4 py-2 rounded-xl bg-custom-button hover:bg-custom-button border border-zinc-200 dark:border-zinc-700 text-custom-primary text-sm font-medium transition-all duration-200"
+                >
+                  Done
+                </button>
+                <button
+                  onClick={() => handleDeleteClick(selectedNote.id)}
+                  className="px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-all duration-200"
+                >
+                  Delete
+                </button>
+              </div>
+              {/* <p className="pt-8 text-xs text-zinc-500 dark:text-zinc-400 text-center">
+              <svg className="inline w-4 h-4 text-white align-text-bottom" fill="currentColor" viewBox="0 0 20 20" aria-label="smile">
+                  <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 01-5.197-2.995.75.75 0 111.294-.76A4.5 4.5 0 0010 14.5a4.5 4.5 0 003.903-2.255.75.75 0 111.294.76A6 6 0 0110 16zm-3-6a1 1 0 112 0 1 1 0 01-2 0zm4 0a1 1 0 112 0 1 1 0 01-2 0z" />
+                </svg>
+                <em>
+                {' '}Notes are saved automatically as you type.
+                </em>                
+              </p> */}
             </div>
           ) : (
             /* Dashboard */
